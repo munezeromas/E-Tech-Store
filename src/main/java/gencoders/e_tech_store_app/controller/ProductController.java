@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,6 +20,7 @@ public class ProductController {
 
     private final ProductService productService;
 
+    // Public endpoints
     @GetMapping
     public ResponseEntity<List<Product>> getAllProducts() {
         return ResponseEntity.ok(productService.getAllProducts());
@@ -50,20 +52,59 @@ public class ProductController {
         return ResponseEntity.ok(productService.getDiscountedProducts());
     }
 
+    // Admin-only endpoints
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Product> createProduct(@Valid @RequestBody ProductRequest request) {
         return ResponseEntity.ok(productService.createProduct(request));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Product> updateProduct(
             @PathVariable Long id, @Valid @RequestBody ProductRequest request) {
         return ResponseEntity.ok(productService.updateProduct(id, request));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // Additional admin features
+    @PatchMapping("/{id}/stock")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Product> updateStock(
+            @PathVariable Long id, @RequestParam int quantity) {
+        return ResponseEntity.ok(productService.updateStock(id, quantity));
+    }
+
+    @PatchMapping("/{id}/price")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Product> updatePrice(
+            @PathVariable Long id, @RequestParam double price) {
+        return ResponseEntity.ok(productService.updatePrice(id, price));
+    }
+
+    @PatchMapping("/{id}/discount")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Product> applyDiscount(
+            @PathVariable Long id, @RequestParam double discountPercentage) {
+        return ResponseEntity.ok(productService.applyDiscount(id, discountPercentage));
+    }
+
+    @GetMapping("/admin/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Product>> getAllProductsForAdmin() {
+        return ResponseEntity.ok(productService.getAllProductsForAdmin());
+    }
+
+    @GetMapping("/admin/low-stock")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Product>> getLowStockProducts(
+            @RequestParam(defaultValue = "5") int threshold) {
+        return ResponseEntity.ok(productService.getLowStockProducts(threshold));
     }
 }

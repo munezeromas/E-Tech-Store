@@ -5,7 +5,6 @@ import lombok.Setter;
 
 @Getter
 @Setter
-// ReviewDto.java
 public class ReviewDto {
     private Long productId;
     private String content;

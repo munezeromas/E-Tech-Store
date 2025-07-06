@@ -8,7 +8,6 @@ public class CategoryRequest {
 
     private String description;
 
-    // Getters and Setters
     public String getName() {
         return name;
     }

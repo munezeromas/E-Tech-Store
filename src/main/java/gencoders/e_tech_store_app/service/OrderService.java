@@ -2,7 +2,7 @@ package gencoders.e_tech_store_app.service;
 
 import gencoders.e_tech_store_app.exception.ResourceNotFoundException;
 import gencoders.e_tech_store_app.model.*;
-import gencoders.e_tech_store_app.payload.request.OrderRequest;
+import gencoders.e_tech_store_app.dto.OrderRequest;
 import gencoders.e_tech_store_app.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -53,7 +53,6 @@ public class OrderService {
         order.setUser(user);
         order.setShippingAddress(shippingAddress);
 
-        // Convert cart items to order items
         List<OrderItem> orderItems = cart.getItems().stream()
                 .map(cartItem -> {
                     OrderItem orderItem = new OrderItem(cartItem.getProduct(), cartItem.getQuantity());

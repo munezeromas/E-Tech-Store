@@ -59,4 +59,27 @@ public class User {
         this.email = email;
         this.password = password;
     }
+
+    // Helper methods for bidirectional relationships
+    public void addAddress(Address address) {
+        this.addresses.add(address);
+        address.setUser(this);
+    }
+
+    public void removeAddress(Address address) {
+        this.addresses.remove(address);
+        address.setUser(null);
+    }
+
+    public void setShoppingCart(ShoppingCart shoppingCart) {
+        this.shoppingCart = shoppingCart;
+        if (shoppingCart != null) {
+            shoppingCart.setUser(this);
+        }
+    }
+
+    public void addOrder(Order order) {
+        this.orders.add(order);
+        order.setUser(this);
+    }
 }

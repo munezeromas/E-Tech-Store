@@ -2,14 +2,12 @@ package gencoders.e_tech_store_app.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -19,45 +17,68 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EntityListeners(AuditingEntityListener.class)
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 255)
     private String name;
 
-    @Column(nullable = false, length = 500)
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
     @Column(precision = 10, scale = 2)
-    private BigDecimal discountPrice;
+    @Builder.Default
+    private BigDecimal discountPrice = BigDecimal.ZERO;
 
     @Column(nullable = false)
-    private Integer stockQuantity;
+    @Builder.Default
+    private Integer stockQuantity = 0;
 
-    @Column(nullable = false)
+    @Column(length = 512)
     private String imageUrl;
 
-    @CreatedDate
-    @Column(updatable = false)
-    private LocalDateTime createdAt;
-
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false)
+    @JoinColumn(name = "category_id")
     private Category category;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private Set<ProductSpecification> specifications = new HashSet<>();
-    @OneToMany(mappedBy = "product")
-    private List <Review> reviews = new ArrayList<>();
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean active = true;
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    // Helper methods
     public void addSpecification(ProductSpecification specification) {
         specifications.add(specification);
         specification.setProduct(this);
+    }
+
+    public void removeSpecification(ProductSpecification specification) {
+        specifications.remove(specification);
+        specification.setProduct(null);
+    }
+
+    public BigDecimal getDiscountedPrice() {
+        return discountPrice.compareTo(BigDecimal.ZERO) > 0 ?
+                discountPrice : price;
+    }
+
+    public boolean isInStock() {
+        return stockQuantity > 0;
     }
 }

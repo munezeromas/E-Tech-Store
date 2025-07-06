@@ -1,25 +1,21 @@
 package gencoders.e_tech_store_app.service;
 
-import gencoders.e_tech_store_app.exception.ResourceNotFoundException;
-import gencoders.e_tech_store_app.model.BlogPost;
-import gencoders.e_tech_store_app.repository.BlogRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import gencoders.e_tech_store_app.dto.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDate;
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
-public class BlogService {
-    private final BlogRepository blogRepository;
-
-    public List<BlogPost> getAllPosts() {
-        return blogRepository.findAllByOrderByCreatedAtDesc();
-    }
-
-    public BlogPost getPostById(Long id) {
-        return blogRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Blog not found", "id",blogRepository.findById(id)));
-
-    }
+public interface BlogService {
+    Page<BlogPostDTO> getAllPosts(Pageable pageable);
+    BlogPostDTO createPost(BlogPostRequest request);
+    BlogPostDTO getPostById(Long id);
+    BlogPostDTO updatePost(Long id, BlogPostRequest request);
+    void deletePost(Long id);
+    CommentDTO addComment(Long postId, CommentRequest request);
+    List<BlogPostDTO> searchPosts(String query);
+    List<BlogPostDTO> searchPostsByDateRange(LocalDate start, LocalDate end);
+    List<BlogPostDTO> searchPostsByTag(String tag);
+    BlogPostDTO getPostBySlug(String slug);
 }

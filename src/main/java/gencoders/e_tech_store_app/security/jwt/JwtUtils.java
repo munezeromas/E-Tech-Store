@@ -1,6 +1,5 @@
 package gencoders.e_tech_store_app.security.jwt;
 
-import gencoders.e_tech_store_app.service.UserDetailsImpl;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -24,23 +23,52 @@ public class JwtUtils {
     private int jwtExpirationMs;
 
     public String generateJwtToken(Authentication authentication) {
-        UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
-
+        String username = authentication.getName();
         return Jwts.builder()
-                .setSubject((userPrincipal.getUsername()))
+                .setSubject(username)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
                 .signWith(key(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    private Key key() {
-        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
+    public String generateToken(String username) {
+        return Jwts.builder()
+                .setSubject(username)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+                .signWith(key(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    public String generatePasswordResetToken(String username) {
+        return Jwts.builder()
+                .setSubject(username)
+                .claim("reset", true)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 10 * 60 * 1000)) // 10 minutes
+                .signWith(key(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    public boolean isResetTokenValid(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder().setSigningKey(key()).build()
+                    .parseClaimsJws(token).getBody();
+            return Boolean.TRUE.equals(claims.get("reset", Boolean.class));
+        } catch (Exception e) {
+            logger.error("Reset token validation failed: {}", e.getMessage());
+            return false;
+        }
     }
 
     public String getUserNameFromJwtToken(String token) {
         return Jwts.parserBuilder().setSigningKey(key()).build()
                 .parseClaimsJws(token).getBody().getSubject();
+    }
+
+    public String extractUsername(String token) {
+        return getUserNameFromJwtToken(token);
     }
 
     public boolean validateJwtToken(String authToken) {
@@ -55,10 +83,15 @@ public class JwtUtils {
             logger.error("JWT token is unsupported: {}", e.getMessage());
         } catch (IllegalArgumentException e) {
             logger.error("JWT claims string is empty: {}", e.getMessage());
-        } catch (JwtException e) {
-            logger.error("JWT error: {}", e.getMessage());
         }
-
         return false;
+    }
+
+    public boolean validateToken(String token) {
+        return validateJwtToken(token);
+    }
+
+    private Key key() {
+        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
     }
 }

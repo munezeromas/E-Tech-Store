@@ -1,23 +1,12 @@
-package gencoders.e_tech_store_app.payload.request;
+package gencoders.e_tech_store_app.dto;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class OrderRequest {
     private Long addressId;
     private String paymentMethod;
 
-    // Getters and Setters
-    public Long getAddressId() {
-        return addressId;
-    }
-
-    public void setAddressId(Long addressId) {
-        this.addressId = addressId;
-    }
-
-    public String getPaymentMethod() {
-        return paymentMethod;
-    }
-
-    public void setPaymentMethod(String paymentMethod) {
-        this.paymentMethod = paymentMethod;
-    }
 }

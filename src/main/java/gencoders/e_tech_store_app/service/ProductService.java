@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -24,56 +25,107 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryService categoryService;
 
+    // Public methods
     @Transactional(readOnly = true)
     public List<Product> getAllProducts() {
-        return productRepository.findAll();
+        return productRepository.findByActiveTrue();
     }
 
     @Transactional(readOnly = true)
     public Page<Product> getProductsByCategory(Long categoryId, Pageable pageable) {
-        return productRepository.findByCategoryId(categoryId, pageable);
+        return productRepository.findByCategoryIdAndActiveTrue(categoryId, pageable);
     }
 
     @Transactional(readOnly = true)
     public Product getProductById(Long productId) {
-        return productRepository.findById(productId)
+        return productRepository.findByIdAndActiveTrue(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
     }
 
     @Transactional(readOnly = true)
     public List<Product> searchProducts(String query) {
-        return productRepository.searchProducts(query.toLowerCase());
+        return productRepository.searchActiveProducts(query.toLowerCase());
     }
 
     @Transactional(readOnly = true)
     public List<Product> getNewArrivals() {
-        return productRepository.findTop8ByOrderByCreatedAtDesc();
+        return productRepository.findTop8ByActiveTrueOrderByCreatedAtDesc();
     }
 
     @Transactional(readOnly = true)
     public List<Product> getDiscountedProducts() {
-        return productRepository.findByDiscountPriceGreaterThan(BigDecimal.ZERO);
+        return productRepository.findByDiscountPriceGreaterThanAndActiveTrue(BigDecimal.ZERO);
     }
 
     @Transactional(readOnly = true)
     public List<Product> getAvailableProducts() {
-        return productRepository.findAllInStock();
+        return productRepository.findAllInStockAndActive();
+    }
+
+    // Admin methods
+    @Transactional(readOnly = true)
+    public List<Product> getAllProductsForAdmin() {
+        return productRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Product> getLowStockProducts(int threshold) {
+        return productRepository.findByStockQuantityLessThanEqual(threshold);
     }
 
     public Product createProduct(ProductRequest request) {
         Product product = mapRequestToProduct(request);
+        product.setActive(true);
         return productRepository.save(product);
     }
 
     public Product updateProduct(Long productId, ProductRequest request) {
-        Product product = getProductById(productId);
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
         updateProductFromRequest(product, request);
         return productRepository.save(product);
     }
 
     public void deleteProduct(Long productId) {
-        Product product = getProductById(productId);
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
         productRepository.delete(product);
+    }
+
+    public Product updateStock(Long productId, int quantity) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+        product.setStockQuantity(quantity);
+        product.setUpdatedAt(LocalDateTime.now());
+        return productRepository.save(product);
+    }
+
+    public Product updatePrice(Long productId, double price) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+        product.setPrice(BigDecimal.valueOf(price));
+        product.setUpdatedAt(LocalDateTime.now());
+        return productRepository.save(product);
+    }
+
+    public Product applyDiscount(Long productId, double discountPercentage) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+
+        BigDecimal discount = product.getPrice()
+                .multiply(BigDecimal.valueOf(discountPercentage / 100));
+        product.setDiscountPrice(product.getPrice().subtract(discount));
+        product.setUpdatedAt(LocalDateTime.now());
+
+        return productRepository.save(product);
+    }
+
+    public Product toggleProductStatus(Long productId, boolean active) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+        product.setActive(active);
+        product.setUpdatedAt(LocalDateTime.now());
+        return productRepository.save(product);
     }
 
     private Product mapRequestToProduct(ProductRequest request) {
@@ -85,6 +137,7 @@ public class ProductService {
                 .stockQuantity(request.getStockQuantity())
                 .imageUrl(request.getImageUrl())
                 .category(categoryService.getCategoryById(request.getCategoryId()))
+                .active(true)
                 .build();
 
         if (request.getSpecifications() != null) {
@@ -103,6 +156,7 @@ public class ProductService {
         product.setStockQuantity(request.getStockQuantity());
         product.setImageUrl(request.getImageUrl());
         product.setCategory(categoryService.getCategoryById(request.getCategoryId()));
+        product.setUpdatedAt(LocalDateTime.now());
 
         // Update specifications
         product.getSpecifications().clear();

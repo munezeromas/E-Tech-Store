@@ -18,31 +18,34 @@ public class Address {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
-    @Size(max = 100)
+    @NotBlank(message = "Street is required")
+    @Size(max = 100, message = "Street must be less than 100 characters")
     private String street;
 
-    @NotBlank
-    @Size(max = 50)
+    @NotBlank(message = "City is required")
+    @Size(max = 50, message = "City must be less than 50 characters")
     private String city;
 
-    @NotBlank
-    @Size(max = 50)
+    @NotBlank(message = "State is required")
+    @Size(max = 50, message = "State must be less than 50 characters")
     private String state;
 
-    @NotBlank
-    @Size(max = 20)
+    @NotBlank(message = "Zip code is required")
+    @Size(max = 20, message = "Zip code must be less than 20 characters")
     private String zipCode;
 
-    @NotBlank
-    @Size(max = 50)
+    @NotBlank(message = "Country is required")
+    @Size(max = 50, message = "Country must be less than 50 characters")
     private String country;
 
-    @Size(max = 20)
+    @Size(max = 20, message = "Phone must be less than 20 characters")
     private String phone;
 
+    @Column(name = "is_default")
+    private boolean isDefault = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @OneToMany(mappedBy = "shippingAddress", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -51,11 +54,17 @@ public class Address {
     public Address() {
     }
 
-    public Address(String street, String city, String state, String zipCode, String country) {
+    public Address(String street, String city, String state, String zipCode, String country, User user) {
         this.street = street;
         this.city = city;
         this.state = state;
         this.zipCode = zipCode;
         this.country = country;
+        this.user = user;
+    }
+
+    // Helper method to get full address
+    public String getFullAddress() {
+        return String.format("%s, %s, %s %s, %s", street, city, state, zipCode, country);
     }
 }

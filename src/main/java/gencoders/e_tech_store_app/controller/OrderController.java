@@ -3,7 +3,7 @@ package gencoders.e_tech_store_app.controller;
 import gencoders.e_tech_store_app.model.Order;
 import gencoders.e_tech_store_app.model.OrderStatus;
 import gencoders.e_tech_store_app.model.PaymentMethod;
-import gencoders.e_tech_store_app.payload.request.OrderRequest;
+import gencoders.e_tech_store_app.dto.OrderRequest;
 import gencoders.e_tech_store_app.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
