@@ -2,7 +2,7 @@ package gencoders.e_tech_store_app.exception;
 
 import java.util.Date;
 
-public class ErrorDetails {
+public class    ErrorDetails {
     private Date timestamp;
     private String message;
     private String details;
