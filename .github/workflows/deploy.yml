@@ -35,9 +35,6 @@ jobs:
     needs: build
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
@@ -58,3 +55,11 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/e_tech_store_app:latest
             ${{ secrets.DOCKER_HUB_USERNAME }}/e_tech_store_app:${{ github.sha }}
+
+  deploy-render:
+    runs-on: ubuntu-latest
+    needs: docker
+    steps:
+      - name: Trigger Render Deployment
+        run: |
+          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
