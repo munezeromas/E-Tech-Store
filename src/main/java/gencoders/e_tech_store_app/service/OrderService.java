@@ -101,7 +101,7 @@ public class OrderService {
         payment.setMethod(method);
         payment.setAmount(order.getTotal());
         payment.setTransactionId(transactionId);
-        payment.setStatus("COMPLETED");
+        payment.setStatus(PaymentStatus.COMPLETED);
 
         order.setStatus(OrderStatus.PROCESSING);
         orderRepository.save(order);
