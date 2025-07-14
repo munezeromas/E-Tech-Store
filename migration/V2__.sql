@@ -58,6 +58,10 @@ ALTER TABLE orders
 DROP
 COLUMN order_number;
 
+ALTER TABLE users
+DROP
+COLUMN phone_number;
+
 ALTER TABLE orders
     ALTER COLUMN address_id DROP NOT NULL;
 
