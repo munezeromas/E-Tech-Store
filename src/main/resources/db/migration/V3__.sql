@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS order_payments
 );
 
 ALTER TABLE users
-    ADD account_non_expired BOOLEAN;
+ADD COLUMN IF NOT EXISTS account_non_expired BOOLEAN;
 
 ALTER TABLE users
     ADD account_non_locked BOOLEAN;
