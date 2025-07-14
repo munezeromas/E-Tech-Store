@@ -33,8 +33,6 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String PhoneNumber;
-
     @NotBlank
     @Size(max = 20)
     private String username;
@@ -88,7 +86,6 @@ public class User implements UserDetails {
     public User(String username, String email, String password) {
         this.username = username;
         this.email = email;
-        this.password = password;
     }
 
     // New constructor to include first and last names for registration
