@@ -79,6 +79,7 @@ public class User implements UserDetails {
     private boolean accountNonExpired = true;
     private boolean accountNonLocked = true;
     private boolean credentialsNonExpired = true;
+    @Column(nullable = false)
     private boolean enabled = true;
 
     public User() {
@@ -163,4 +164,5 @@ public class User implements UserDetails {
     public void addRole(Role role) {
         this.roles.add(role);
     }
+
 }
