@@ -1,4 +1,3 @@
-// src/main/java/gencoders/e_tech_store_app/user/User.java
 package gencoders.e_tech_store_app.user;
 
 import gencoders.e_tech_store_app.address.Address;
@@ -76,9 +75,17 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Order> orders = new HashSet<>();
 
+    // Updated with proper JPA annotations for database migration
+    @Column(name = "account_non_expired", nullable = false, columnDefinition = "boolean default true")
     private boolean accountNonExpired = true;
+
+    @Column(name = "account_non_locked", nullable = false, columnDefinition = "boolean default true")
     private boolean accountNonLocked = true;
+
+    @Column(name = "credentials_non_expired", nullable = false, columnDefinition = "boolean default true")
     private boolean credentialsNonExpired = true;
+
+    @Column(name = "enabled", nullable = false, columnDefinition = "boolean default true")
     private boolean enabled = true;
 
     public User() {
