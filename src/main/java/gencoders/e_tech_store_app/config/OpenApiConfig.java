@@ -36,7 +36,14 @@ public class OpenApiConfig {
     @Primary
     public OpenAPI eTechStoreOpenAPI() {
         return new OpenAPI()
-                .servers(List.of(new Server().url(serverUrl)))
+                .servers(List.of(
+                        new Server()
+                                .url("http://localhost:8080")
+                                .description("Local Server"),
+                        new Server()
+                                .url("https://e-tech-store-6d7o.onrender.com")
+                                .description("Production Server")
+                ))
                 .info(new Info()
                         .title("E-Tech Store API")
                         .description("Complete API documentation for E-Tech Store Application")

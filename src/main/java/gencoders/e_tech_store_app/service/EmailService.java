@@ -10,8 +10,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class EmailService {
 
-    @Autowired
-    private JavaMailSender mailSender;
+    private final JavaMailSender mailSender;
+
+    public EmailService(JavaMailSender mailSender) {
+        this.mailSender = mailSender;
+    }
 
     public void sendResetEmail(String to, String token) {
         String resetLink = "http://localhost:4200/reset-password?token=" + token;
