@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -107,7 +108,12 @@ public class ProductService {
 
     /* ---------- Mutations ---------- */
 
-    public Product createProduct(ProductRequest req) {
+    public Product createProduct(ProductRequest req, List<MultipartFile> images) {
+        Set<String> imageUrls = images.stream()
+                .map(img -> cloudinaryService.uploadFile(img, "product_images"))
+                .collect(Collectors.toSet());
+
+
         return productRepository.save(mapRequestToProduct(req));
     }
 

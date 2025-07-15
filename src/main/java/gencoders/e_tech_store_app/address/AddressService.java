@@ -35,8 +35,10 @@ public class AddressService {
     public Address createAddress(AddressRequest request, User user) {
         Address address = new Address();
         address.setStreet(request.getStreet());
+        address.setDistrict(request.getDistrict());
+        address.setProvince(request.getProvince());
+        address.setDescription(request.getDescription());
         address.setCity(request.getCity());
-        address.setState(request.getState());
         address.setZipCode(request.getZipCode());
         address.setCountry(request.getCountry());
         address.setPhone(request.getPhone());
@@ -54,7 +56,9 @@ public class AddressService {
 
         address.setStreet(request.getStreet());
         address.setCity(request.getCity());
-        address.setState(request.getState());
+        address.setDistrict(request.getDistrict());
+        address.setProvince(request.getProvince());
+        address.setDescription(request.getDescription());
         address.setZipCode(request.getZipCode());
         address.setCountry(request.getCountry());
         address.setPhone(request.getPhone());

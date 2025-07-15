@@ -14,9 +14,17 @@ public class AddressRequest {
     @Size(max = 50, message = "City must be less than 50 characters")
     private String city;
 
-    @NotBlank(message = "State is required")
+    @NotBlank(message = "District is required")
     @Size(max = 50, message = "State must be less than 50 characters")
-    private String state;
+    private String District;
+
+    @NotBlank(message = "Province is required")
+    @Size(max = 50, message = "State must be less than 50 characters")
+    private String Province;
+
+    @NotBlank(message = "Description is required")
+    @Size(max = 50, message = "State must be less than 50 characters")
+    private String Description;
 
     @NotBlank(message = "Zip code is required")
     @Size(max = 20, message = "Zip code must be less than 20 characters")

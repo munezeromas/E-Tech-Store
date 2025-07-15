@@ -2,6 +2,7 @@ package gencoders.e_tech_store_app.product;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import gencoders.e_tech_store_app.category.Category;
+import gencoders.e_tech_store_app.review.Review;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -14,19 +15,23 @@ import java.util.Set;
 
 @Entity
 @Table(name = "products")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Product {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String ImageUrls;
-    private String MainImageUrl;
+    // ─── IMAGES ────────────────────────────────────────────────────
+    @Column(length = 512)
+    private String mainImage;               // Hero image (optional)
+    private String imageUrl;                // Primary image shown in listings
 
+    @ElementCollection
+    @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
+    @Column(name = "image_url", length = 512)
+    @Builder.Default
+    private Set<String> additionalImages = new HashSet<>();
+
+    // ─── CORE INFO ────────────────────────────────────────────────
     @Column(nullable = false, length = 255)
     private String name;
 
@@ -44,83 +49,58 @@ public class Product {
     @Builder.Default
     private Integer stockQuantity = 0;
 
-    @Column(length = 512)
-    private String imageUrl; // ✔️ keep it so your getImageUrl/setImageUrl code works
-
-    @Column(length = 512)
-    private String mainImage; // New field
-
-    @ElementCollection
-    @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
-    @Column(name = "image_url", length = 512)
-    @Builder.Default
-    private Set<String> additionalImages = new HashSet<>();
-
+    // ─── CATEGORY ────────────────────────────────────────────────
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnoreProperties("products")
     @JoinColumn(name = "category_id")
     private Category category;
 
+    // ─── SPECS & REVIEWS ─────────────────────────────────────────
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private Set<ProductSpecification> specifications = new HashSet<>();
 
-    @Column(nullable = false)
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
+    private Set<Review> reviews = new HashSet<>();
+
+    // ─── FLAGS ───────────────────────────────────────────────────
+    @Column(nullable = false) @Builder.Default
     private Boolean active = true;
 
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(nullable = false) @Builder.Default
+    private Boolean featured = false;
+
+    // ─── TIMESTAMPS ──────────────────────────────────────────────
+    @CreationTimestamp @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    @UpdateTimestamp
-    @Column(name = "updated_at")
+    @UpdateTimestamp @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // ----- Helper Methods -----
-    public void addSpecification(ProductSpecification specification) {
-        specifications.add(specification);
-        specification.setProduct(this);
-    }
+    // ─── COMMON ATTRIBUTES (linked to option tables) ─────────────
+    @ManyToOne private MemoryOption memory;
+    @ManyToOne private ScreenTypeOption screenType;
+    @ManyToOne private ProtectionOption protection;
+    @ManyToOne private BatteryCapacityOption batteryCapacity;
 
-    public void removeSpecification(ProductSpecification specification) {
-        specifications.remove(specification);
-        specification.setProduct(null);
+    @Column(length = 100) private String brand;
+    @Column(length = 100) private String model;
+    @Column(length = 50)  private String screenSize;   // e.g. 6.1"
+
+    // ─── HELPERS ─────────────────────────────────────────────────
+    public void addSpecification(ProductSpecification spec) {
+        specifications.add(spec);
+        spec.setProduct(this);
+    }
+    public void removeSpecification(ProductSpecification spec) {
+        specifications.remove(spec);
+        spec.setProduct(null);
     }
 
     public BigDecimal getDiscountedPrice() {
         return discountPrice.compareTo(BigDecimal.ZERO) > 0 ? discountPrice : price;
     }
 
-    public boolean isInStock() {
-        return stockQuantity > 0;
-    }
-
-    @Column(length = 100)
-    private String brand;
-
-    @Column(length = 100)
-    private String model; // SKU code like (MQ233)
-
-    @Column(length = 50)
-    private String memory; // 128GB, 256GB etc
-
-    @Column(length = 50)
-    private String screenSize; // 6.1", 6.7"
-
-    @Column(length = 50)
-    private String screenType; // OLED, LCD, etc.
-
-    @Column(length = 50)
-    private String protection; // IP68, etc
-
-    @Column(length = 50)
-    private String batteryCapacity; // e.g., 4323mAh
-
-    @Column
-    private Double rating;
-    // 1.0 to 5.0
-    @Column(nullable = true)
-    private boolean featured = false;
-
+    public boolean isInStock() { return stockQuantity > 0; }
 }

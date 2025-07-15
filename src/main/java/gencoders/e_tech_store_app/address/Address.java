@@ -28,9 +28,18 @@ public class Address {
     @Size(max = 50, message = "City must be less than 50 characters")
     private String city;
 
-    @NotBlank(message = "State is required")
+    @NotBlank(message = "District is required")
     @Size(max = 50, message = "State must be less than 50 characters")
-    private String state;
+    private String District;
+
+    @NotBlank(message = "Province is required")
+    @Size(max = 50, message = "State must be less than 50 characters")
+    private String Province;
+
+    @NotBlank(message = "Description is required")
+    @Size(max = 50, message = "State must be less than 50 characters")
+    private String Description;
+
 
     @NotBlank(message = "Zip code is required")
     @Size(max = 20, message = "Zip code must be less than 20 characters")
@@ -59,7 +68,9 @@ public class Address {
     public Address(String street, String city, String state, String zipCode, String country, User user) {
         this.street = street;
         this.city = city;
-        this.state = state;
+        this.District = state;
+        this.Province = state;
+        this.Description = state;
         this.zipCode = zipCode;
         this.country = country;
         this.user = user;
@@ -67,6 +78,6 @@ public class Address {
 
     // Helper method to get full address
     public String getFullAddress() {
-        return String.format("%s, %s, %s %s, %s", street, city, state, zipCode, country);
+        return String.format("%s, %s, , %s ,%s %s, %s, %s",street, city, District,Description,Province, zipCode, country);
     }
 }

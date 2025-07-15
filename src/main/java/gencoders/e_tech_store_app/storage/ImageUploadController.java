@@ -18,6 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +32,7 @@ import java.util.Map;
 @RequestMapping("/api/uploads")
 @RequiredArgsConstructor
 @Slf4j
+@CrossOrigin(origins = "*", maxAge = 3600)
 @Tag(name = "File Upload", description = "Endpoints for uploading and managing files in cloud storage")
 public class ImageUploadController {
 
@@ -75,7 +77,6 @@ public class ImageUploadController {
             String username = SecurityContextHolder.getContext().getAuthentication().getName();
             log.info("User {} uploading profile picture", username);
 
-            // Profile pictures are resized to 400x400 for consistency
             String url = cloudinaryService.uploadProfilePicture(file, username);
             return ResponseEntity.ok(new ProfilePictureResponse(url, username));
         } catch (IllegalArgumentException e) {
@@ -189,7 +190,7 @@ public class ImageUploadController {
     }
 
     /* --------------------------------------------------------------------
-     * 4. Generic image upload (Admin only) - Keep for backward compatibility
+     * 4. Generic image upload (Admin only)
      * ------------------------------------------------------------------ */
     @PostMapping(value = "/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
@@ -292,7 +293,6 @@ public class ImageUploadController {
             String username = SecurityContextHolder.getContext().getAuthentication().getName();
             log.info("User {} deleting profile picture: {}", username, imageUrl);
 
-            // Additional security check: ensure the image belongs to the user
             if (imageUrl.contains("/profile-pictures/" + username + "/")) {
                 cloudinaryService.deleteFile(imageUrl);
                 return ResponseEntity.noContent().build();
@@ -344,33 +344,18 @@ public class ImageUploadController {
     }
 
     /* --------------------------------------------------------------------
-     * Error Response DTO
+     * 9. Test Cloudinary connection
      * ------------------------------------------------------------------ */
-    @Data
-    @AllArgsConstructor
-    public static class ErrorResponse {
-        private String error;
-        private java.time.LocalDateTime timestamp;
-
-        public ErrorResponse(String error) {
-            this.error = error;
-            this.timestamp = java.time.LocalDateTime.now();
-        }
-    }
-    // Add this method to your ImageUploadController
-
     @GetMapping("/test-connection")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Test Cloudinary connection")
     public ResponseEntity<?> testCloudinaryConnection() {
         try {
-            // Use the CloudinaryService to test connection
             Map<String, Object> result = cloudinaryService.testConnection();
-
             return ResponseEntity.ok(Map.of(
                     "status", "success",
                     "message", "Cloudinary connection successful",
-                    "timestamp", java.time.LocalDateTime.now(),
+                    "timestamp", LocalDateTime.now(),
                     "result", result
             ));
         } catch (Exception e) {
@@ -379,8 +364,23 @@ public class ImageUploadController {
                     .body(Map.of(
                             "status", "error",
                             "message", "Cloudinary connection failed: " + e.getMessage(),
-                            "timestamp", java.time.LocalDateTime.now()
+                            "timestamp", LocalDateTime.now()
                     ));
+        }
+    }
+
+    /* --------------------------------------------------------------------
+     * Error Response DTO
+     * ------------------------------------------------------------------ */
+    @Data
+    @AllArgsConstructor
+    public static class ErrorResponse {
+        private String error;
+        private LocalDateTime timestamp;
+
+        public ErrorResponse(String error) {
+            this.error = error;
+            this.timestamp = LocalDateTime.now();
         }
     }
 }

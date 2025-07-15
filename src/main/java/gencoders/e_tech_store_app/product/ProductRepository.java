@@ -1,5 +1,7 @@
 package gencoders.e_tech_store_app.product;
 
+import gencoders.e_tech_store_app.category.Category;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -135,4 +137,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                                  BigDecimal maxPrice,
                                  String q,
                                  Pageable pageable);
+
+    List<Product> findTop4ByCategoryAndIdNot(Category category, Long id, Limit limit);
 }

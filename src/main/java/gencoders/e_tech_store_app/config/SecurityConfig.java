@@ -79,17 +79,27 @@ public class SecurityConfig {
                                 "/api/blog/**", "/api/public/**",
                                 "/api/wishlist/shared/**", "/api/users/public/**"
                         ).permitAll()
+
+                        // File upload endpoints - explicit configuration (alternative approach)
+                        .requestMatchers("/api/uploads/profile-picture").authenticated()
+                        .requestMatchers("/api/uploads/product-image").hasRole("ADMIN")
+                        .requestMatchers("/api/uploads/product-images").hasRole("ADMIN")
+                        .requestMatchers("/api/uploads/image").hasRole("ADMIN")
+                        .requestMatchers("/api/uploads/test-connection").hasRole("ADMIN")
+
                         // User‑only endpoints
                         .requestMatchers(
                                 "/api/users/**", "/api/addresses/**", "/api/wishlist/**",
                                 "/api/cart/**", "/api/orders/**", "/api/payments/**",
                                 "/api/reviews/**", "/api/users/me/**"
                         ).hasRole("USER")
+
                         // Admin‑only endpoints
                         .requestMatchers(
                                 "/api/admin/**", "/api/products/admin/**", "/api/blog/**/admin/**",
                                 "/api/management/**", "/api/categories/**/admin/**", "/actuator/**"
                         ).hasRole("ADMIN")
+
                         // Everything else needs auth
                         .anyRequest().authenticated()
                 )

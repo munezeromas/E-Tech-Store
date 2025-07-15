@@ -54,8 +54,8 @@ public class  ProductController {
     // Admin-only endpoints
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Product> createProduct(@Valid @RequestBody ProductRequest request) {
-        return ResponseEntity.ok(productService.createProduct(request));
+    public ResponseEntity<Product> createProduct(@Valid @RequestPart ProductRequest request, @RequestPart List<MultipartFile> images) {
+        return ResponseEntity.ok(productService.createProduct(request, images));
     }
 
     @PutMapping("/{id}")

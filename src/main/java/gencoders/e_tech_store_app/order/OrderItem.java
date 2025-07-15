@@ -28,14 +28,21 @@ public class OrderItem {
     @Positive
     private Integer quantity;
 
-    private BigDecimal priceAtPurchase;
+    private BigDecimal unitPrice;
+    private BigDecimal totalPrice;
 
-    public OrderItem() {
-    }
+    public OrderItem() {}
 
     public OrderItem(Product product, Integer quantity) {
         this.product = product;
         this.quantity = quantity;
-        this.priceAtPurchase = product.getPrice();
+        this.unitPrice = product.getPrice();
+        this.totalPrice = unitPrice.multiply(BigDecimal.valueOf(quantity));
+    }
+
+    public void calculateTotalPrice() {
+        if (unitPrice != null && quantity != null) {
+            this.totalPrice = unitPrice.multiply(BigDecimal.valueOf(quantity));
+        }
     }
 }

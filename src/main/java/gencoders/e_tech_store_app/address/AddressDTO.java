@@ -13,8 +13,10 @@ public class AddressDTO {
     private Long id;
     private String street;
     private String city;
-    private String state;
     private String zipCode;
+    private String description;
+    private String district;
+    private String province;
     private String country;
     private String phone;
     private boolean isDefault;

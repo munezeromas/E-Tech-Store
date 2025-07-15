@@ -24,7 +24,6 @@ public class ShoppingCart {
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<CartItem> items = new HashSet<>();
-
     private BigDecimal totalPrice;
 
     public ShoppingCart() {
@@ -36,4 +35,5 @@ public class ShoppingCart {
                 .map(item -> item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
+
 }

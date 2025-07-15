@@ -17,21 +17,30 @@ import java.util.Objects;
 @Entity
 @DiscriminatorValue("CREDIT_CARD")
 public class CreditCardPayment extends Payment {
-    private String cardNumber;
+    private String encryptedCardNumber;
     private String cardHolderName;
     private String expiryDate;
     private String cvv;
     private String billingAddress;
 
+    public void setCardNumber(String cardNumber) {
+        this.encryptedCardNumber = encrypt(cardNumber);
+    }
+
     @Override
     public boolean processPayment() {
-        // Simulate card processing
-        boolean success = Math.random() > 0.2; // 80% success rate
+        // TODO: Integrate with actual payment gateway
+        boolean success = Math.random() > 0.2; // 80% success rate (placeholder)
         if (success) {
             setTransactionId("CC" + System.currentTimeMillis());
             return true;
         }
         return false;
+    }
+
+    private String encrypt(String data) {
+        // TODO: Implement encryption (e.g., using Spring Security or a payment gateway token)
+        return data; // Placeholder
     }
 
     @Override
