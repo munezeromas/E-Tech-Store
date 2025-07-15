@@ -7,19 +7,21 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 /**
- * Response DTO for single file upload
+ * Response DTO for profile picture upload
  */
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class FileUploadResponse {
+@NoArgsConstructor
+public class ProfilePictureResponse {
     private String url;
+    private String username;
     private String message;
     private LocalDateTime timestamp;
 
-    public FileUploadResponse(String url) {
+    public ProfilePictureResponse(String url, String username) {
         this.url = url;
-        this.message = "File uploaded successfully";
+        this.username = username;
+        this.message = "Profile picture uploaded successfully";
         this.timestamp = LocalDateTime.now();
     }
 }

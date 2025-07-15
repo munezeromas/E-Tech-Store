@@ -30,7 +30,18 @@ public class OTPService {
         return isValid;
     }
 
-        private record OtpEntry(String otp, LocalDateTime expiry) {
+    public boolean hasPendingAuth(String email) {
+        OtpEntry entry = otpStore.get(email);
+        return entry != null && entry.expiry().isAfter(LocalDateTime.now());
+    }
 
+    public String resendOtp(String email) {
+        if (!hasPendingAuth(email)) {
+            throw new RuntimeException("No pending authentication found for email: " + email);
+        }
+        return generateOtp(email);
+    }
+
+    private record OtpEntry(String otp, LocalDateTime expiry) {
     }
 }

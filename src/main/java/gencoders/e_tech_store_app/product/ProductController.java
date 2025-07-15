@@ -142,4 +142,15 @@ public class  ProductController {
         Product product = productService.removeProductImage(id, imageUrl);
         return ResponseEntity.ok(product);
     }
+//    @GetMapping("/featured")
+//    public ResponseEntity<List<Product>> getFeaturedProducts(
+//            @RequestParam(defaultValue = "8") int count) {
+//        return ResponseEntity.ok(productService.getFeaturedProducts(count));
+//    }
+//
+//    @GetMapping("/best-sellers")
+//    public ResponseEntity<List<Product>> getBestSellers(
+//            @RequestParam(defaultValue = "8") int count) {
+//        return ResponseEntity.ok(productService.getBestSellers(count));
+//    }
 }
