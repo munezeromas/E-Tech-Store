@@ -2,6 +2,7 @@ package gencoders.e_tech_store_app.auth;
 
 import lombok.Getter;
 import lombok.Setter;
+
 import java.util.List;
 
 @Getter
@@ -13,6 +14,7 @@ public class AuthResponse {
     private String email;
     private List<String> roles;
     private String jwt;
+    private String tokenType = "Bearer";
 
     public AuthResponse(String message, Long id, String username, String email, List<String> roles) {
         this.message = message;

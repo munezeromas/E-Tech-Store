@@ -6,7 +6,9 @@ import gencoders.e_tech_store_app.service.EmailService;
 import gencoders.e_tech_store_app.user.UserDetailsImpl;
 import gencoders.e_tech_store_app.user.UserService;
 import gencoders.e_tech_store_app.user.UserDetailsServiceImpl;
+import gencoders.e_tech_store_app.jwt.JwtUtils; // Add this import
 
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,15 +38,18 @@ public class AuthController {
     private final OTPService otpService;
     private final UserDetailsServiceImpl userDetailsService;
     private final AuthenticationManager authenticationManager;
+    private final JwtUtils jwtUtils; // Add this field
 
     public AuthController(UserService userService, EmailService emailService, OTPService otpService,
                           AuthenticationManager authenticationManager,
-                          UserRepository userRepository, UserDetailsServiceImpl userDetailsService) {
+                          UserRepository userRepository, UserDetailsServiceImpl userDetailsService,
+                          JwtUtils jwtUtils) { // Add JwtUtils to constructor
         this.userService = userService;
         this.emailService = emailService;
         this.otpService = otpService;
         this.userDetailsService = userDetailsService;
         this.authenticationManager = authenticationManager;
+        this.jwtUtils = jwtUtils; // Initialize JwtUtils
     }
 
     @PostMapping("/signup")
@@ -74,28 +79,35 @@ public class AuthController {
     }
 
     @PostMapping("/signin/request-otp")
-    public ResponseEntity<?> requestOtp(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> requestOtp(@RequestBody LoginRequest loginRequest, HttpSession session) {
         try {
             if (userService.isLoginValid(loginRequest)) {
-                String otp = otpService.generateOtp(loginRequest.getEmail());
-                emailService.sendOtpEmail(loginRequest.getEmail(), otp);
-                logger.info("OTP sent to email: {}", loginRequest.getEmail());
+                String email = loginRequest.getEmail();
+                String otp = otpService.generateOtp(email);
+                emailService.sendOtpEmail(email, otp);
+
+                // ✅ Store email in session
+                session.setAttribute("OTP_EMAIL", email);
+
+                logger.info("OTP sent to email: {}", email);
                 return ResponseEntity.ok(new MessageResponse("OTP sent to your email."));
             } else {
-                logger.warn("Invalid credentials for email: {}", loginRequest.getEmail());
                 return ResponseEntity.badRequest().body(new MessageResponse("Invalid credentials."));
             }
         } catch (Exception e) {
-            logger.error("Error sending OTP: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new MessageResponse("Error sending OTP: " + e.getMessage()));
         }
     }
 
     @PostMapping("/signin/resend-otp")
-    public ResponseEntity<?> resendOtp(@RequestBody ResendOTPRequest request) {
+    public ResponseEntity<?> resendOtp(HttpSession session) {
         try {
-            String email = request.getEmail();
+            String email = (String) session.getAttribute("OTP_EMAIL");
+
+            if (email == null) {
+                return ResponseEntity.badRequest().body(new MessageResponse("No OTP process found. Please login again."));
+            }
 
             if (!otpService.hasPendingAuth(email)) {
                 return ResponseEntity.badRequest().body(new MessageResponse("No pending authentication found. Please login again."));
@@ -103,14 +115,11 @@ public class AuthController {
 
             String otp = otpService.resendOtp(email);
             emailService.sendOtpEmail(email, otp);
-            logger.info("OTP resent to email: {}", email);
 
+            logger.info("OTP resent to email: {}", email);
             return ResponseEntity.ok(new MessageResponse("OTP resent to your email."));
-        } catch (RuntimeException e) {
-            logger.warn("Error resending OTP: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
+
         } catch (Exception e) {
-            logger.error("Error resending OTP: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new MessageResponse("Error resending OTP: " + e.getMessage()));
         }
@@ -121,7 +130,7 @@ public class AuthController {
         try {
             logger.info("Verifying OTP for email: {}", request.getEmail());
 
-            if (!otpService.validateOtp(request.getEmail(), String.valueOf(request.getOtp()))) {
+            if (!otpService.validateOtp(request.getEmail(), request.getOtp())) {
                 logger.warn("Invalid or expired OTP for email: {}", request.getEmail());
                 return ResponseEntity.badRequest().body(new MessageResponse("Invalid or expired OTP."));
             }
@@ -131,6 +140,9 @@ public class AuthController {
                     new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
             SecurityContextHolder.getContext().setAuthentication(authToken);
 
+            // Generate JWT token
+            String jwtToken = jwtUtils.generateToken(userDetails);
+
             UserDetailsImpl userDetailsImpl = (UserDetailsImpl) userDetails;
             List<String> roles = userDetailsImpl.getAuthorities().stream()
                     .map(GrantedAuthority::getAuthority)
@@ -138,12 +150,17 @@ public class AuthController {
 
             logger.info("User authenticated successfully: {}", userDetailsImpl.getUsername());
 
+            // Create personalized welcome message
+            String welcomeMessage = String.format("Welcome back, %s! Login successful.", userDetailsImpl.getUsername());
+
+            // Return response with JWT token
             return ResponseEntity.ok(new AuthResponse(
-                    "Login successful",
+                    welcomeMessage,
                     userDetailsImpl.getId(),
                     userDetailsImpl.getUsername(),
                     userDetailsImpl.getEmail(),
-                    roles
+                    roles,
+                    jwtToken // Add the JWT token here
             ));
 
         } catch (Exception e) {
@@ -183,11 +200,24 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout() {
+    public ResponseEntity<?> logout(Principal principal) {
         try {
+            String goodbyeMessage = "Logged out successfully.";
+
+            // Get current user's name for personalized goodbye message
+            if (principal != null) {
+                try {
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(principal.getName());
+                    UserDetailsImpl userDetailsImpl = (UserDetailsImpl) userDetails;
+                    goodbyeMessage = String.format("Goodbye, %s! You have been logged out successfully.", userDetailsImpl.getUsername());
+                } catch (Exception e) {
+                    logger.warn("Could not retrieve user details for logout message: {}", e.getMessage());
+                }
+            }
+
             SecurityContextHolder.clearContext();
             logger.info("User logged out successfully");
-            return ResponseEntity.ok(new MessageResponse("Logged out successfully."));
+            return ResponseEntity.ok(new MessageResponse(goodbyeMessage));
         } catch (Exception e) {
             logger.error("Error during logout: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -220,6 +250,9 @@ public class AuthController {
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
+            // Generate JWT token
+            String jwtToken = jwtUtils.generateJwtToken(authentication);
+
             UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
             List<String> roles = userDetails.getAuthorities().stream()
                     .map(GrantedAuthority::getAuthority)
@@ -227,12 +260,17 @@ public class AuthController {
 
             logger.info("User authenticated successfully: {}", userDetails.getUsername());
 
+            // Create personalized welcome message
+            String welcomeMessage = String.format("Welcome back, %s! Login successful.", userDetails.getUsername());
+
+            // Return response with JWT token
             return ResponseEntity.ok(new AuthResponse(
-                    "Login successful",
+                    welcomeMessage,
                     userDetails.getId(),
                     userDetails.getUsername(),
                     userDetails.getEmail(),
-                    roles
+                    roles,
+                    jwtToken // Add the JWT token here
             ));
 
         } catch (Exception e) {
@@ -241,6 +279,4 @@ public class AuthController {
                     .body(new MessageResponse("Invalid credentials"));
         }
     }
-
-
 }

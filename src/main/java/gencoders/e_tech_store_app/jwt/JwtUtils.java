@@ -1,6 +1,8 @@
 package gencoders.e_tech_store_app.jwt;
 
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
@@ -21,17 +23,16 @@ public class JwtUtils {
     private static final Logger logger = LoggerFactory.getLogger(JwtUtils.class);
 
     @Value("${app.jwt.secret}")
-    private String jwtSecret;
+    private String jwtSecret;              // base64‑encoded secret
 
-    @Value("${app.jwt.expiration}")
+    @Value("${app.jwt.expiration}")        // in milliseconds
     private int jwtExpirationMs;
 
     /* ---------- key helper ---------- */
 
     private SecretKey key() {
-        // needs javax.crypto.SecretKey for 0.12.x verifyWith(..)
         byte[] decoded = Decoders.BASE64.decode(jwtSecret);
-        return Keys.hmacShaKeyFor(decoded);          // HS‑family key
+        return Keys.hmacShaKeyFor(decoded);            // HS‑family key
     }
 
     /* ---------- token builders ---------- */
@@ -41,10 +42,9 @@ public class JwtUtils {
 
         Collection<? extends GrantedAuthority> roles = user.getAuthorities();
         if (roles != null && !roles.isEmpty()) {
-            claims.put("roles",
-                    roles.stream()
-                            .map(GrantedAuthority::getAuthority)
-                            .collect(Collectors.toList()));
+            claims.put("roles", roles.stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.toList()));
         }
 
         return Jwts.builder()
@@ -52,7 +52,7 @@ public class JwtUtils {
                 .subject(user.getUsername())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
-                .signWith(key())                      // algorithm auto‑selected from key
+                .signWith(key())                     // alg auto‑derived from key
                 .compact();
     }
 
@@ -61,7 +61,7 @@ public class JwtUtils {
                 .claim("reset", true)
                 .subject(username)
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + 15 * 60 * 1000))
+                .expiration(new Date(System.currentTimeMillis() + 15 * 60 * 1000))  // 15 min
                 .signWith(key())
                 .compact();
     }
@@ -69,8 +69,8 @@ public class JwtUtils {
     /* ---------- parsing / validation ---------- */
 
     private Claims parse(String token) {
-        return Jwts.parser()                         // 0.12.x
-                .verifyWith(key())                   // supply SecretKey to verify sig
+        return Jwts.parser()
+                .verifyWith(key())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
@@ -91,7 +91,7 @@ public class JwtUtils {
 
     public boolean validateJwtToken(String token) {
         try {
-            parse(token);           // will throw if invalid
+            parse(token);    // throws if invalid / expired
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             logger.error("JWT validation failed: {}", e.getMessage());
@@ -99,17 +99,21 @@ public class JwtUtils {
         }
     }
 
-    /* ---------- convenience for Spring Security ---------- */
+    /* ---------- Spring‑Security helpers ---------- */
 
     public String generateJwtToken(Authentication auth) {
         return generateToken((UserDetails) auth.getPrincipal());
     }
+    /* ---------- convenience wrappers for filters ---------- */
 
+    /** legacy alias used by JwtAuthFilter */
     public String extractUsername(String token) {
         return getUserNameFromJwtToken(token);
     }
 
+    /** legacy alias used by JwtAuthFilter */
     public boolean validateToken(String token) {
         return validateJwtToken(token);
     }
 }
+
