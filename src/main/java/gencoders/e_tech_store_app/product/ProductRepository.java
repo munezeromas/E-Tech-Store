@@ -85,4 +85,54 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT COALESCE(SUM(p.stockQuantity * p.price), 0) FROM Product p WHERE p.active = true")
     BigDecimal getTotalInventoryValue();
+    @Query("SELECT p FROM Product p WHERE " +
+            "(:brand IS NULL OR LOWER(p.brand) = LOWER(:brand)) AND " +
+            "(:memory IS NULL OR LOWER(p.memory) = LOWER(:memory)) AND " +
+            "(:protection IS NULL OR LOWER(p.protection) = LOWER(:protection)) AND " +
+            "(:screenType IS NULL OR LOWER(p.screenType) = LOWER(:screenType)) AND " +
+            "(:screenSize IS NULL OR LOWER(p.screenSize) = LOWER(:screenSize)) AND " +
+            "(:minPrice IS NULL OR p.price >= :minPrice) AND " +
+            "(:maxPrice IS NULL OR p.price <= :maxPrice) AND " +
+            "(:battery IS NULL OR LOWER(p.batteryCapacity) = LOWER(:battery))")
+    Page<Product> filterProducts(
+            String brand,
+            String memory,
+            String protection,
+            String screenType,
+            String screenSize,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            String battery,
+            Pageable pageable
+    );
+    List<Product> findByFeaturedTrue();
+
+    // ➜ flexible filtering used by getFilteredProducts
+    @Query("""
+           SELECT p FROM Product p
+           WHERE p.active = true
+             AND (:category IS NULL OR LOWER(p.category.name) = LOWER(:category))
+             AND (:brand    IS NULL OR LOWER(p.brand)        = LOWER(:brand))
+             AND (:memory   IS NULL OR LOWER(p.memory)       = LOWER(:memory))
+             AND (:protection IS NULL OR LOWER(p.protection) = LOWER(:protection))
+             AND (:screenType IS NULL OR LOWER(p.screenType) = LOWER(:screenType))
+             AND (:screenSize IS NULL OR LOWER(p.screenSize) = LOWER(:screenSize))
+             AND (:battery  IS NULL OR LOWER(p.batteryCapacity) = LOWER(:battery))
+             AND (:minPrice IS NULL OR p.price >= :minPrice)
+             AND (:maxPrice IS NULL OR p.price <= :maxPrice)
+             AND (:q IS NULL OR
+                    LOWER(p.name) LIKE LOWER(CONCAT('%',:q,'%')) OR
+                    LOWER(p.description) LIKE LOWER(CONCAT('%',:q,'%')))
+           """)
+    Page<Product> filterProducts(String category,
+                                 String brand,
+                                 String memory,
+                                 String protection,
+                                 String screenType,
+                                 String screenSize,
+                                 String battery,
+                                 BigDecimal minPrice,
+                                 BigDecimal maxPrice,
+                                 String q,
+                                 Pageable pageable);
 }

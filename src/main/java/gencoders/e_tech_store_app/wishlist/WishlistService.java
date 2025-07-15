@@ -166,4 +166,19 @@ public class WishlistService {
                 inCart
         );
     }
+    @Transactional
+    public WishlistItemDto addToWishlist(String userId, Long productId) {
+        return toggleWishlistItem(userId, productId.toString());
+    }
+
+    @Transactional
+    public void removeFromWishlist(String userId, Long productId) {
+        removeItemsFromWishlist(userId, List.of(productId.toString()));
+    }
+
+    @Transactional(readOnly = true)
+    public WishlistDto getUserWishlist(String userId) {
+        return getUserWishlist(userId, 0, Integer.MAX_VALUE);
+    }
+
 }

@@ -9,6 +9,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -25,7 +27,7 @@ public class ProductService {
     private final CategoryService categoryService;
     private final CloudinaryService cloudinaryService;
 
-    /* ----------  Public queries  ---------- */
+    /* ---------- Public Queries ---------- */
 
     @Transactional(readOnly = true)
     public List<Product> getAllProducts() {
@@ -54,21 +56,56 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
+    public List<Product> getFeaturedProducts() {
+        return productRepository.findByFeaturedTrue();
+    }
+
+    @Transactional(readOnly = true)
     public List<Product> getDiscountedProducts() {
         return productRepository.findByDiscountPriceGreaterThanAndActiveTrue(BigDecimal.ZERO);
     }
 
-    /* ----------  Admin queries  ---------- */
+    @Transactional(readOnly = true)
+    public Page<Product> getFilteredProducts(
+            int page, int size, String sortBy, String sortDir,
+            String category, String brand, String memory, String protection,
+            String screenType, String screenSize,
+            BigDecimal minPrice, BigDecimal maxPrice,
+            String battery, String search) {
+
+        Sort sort = Sort.by(sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC,
+                sortBy);
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        return productRepository.filterProducts(
+                category, brand, memory, protection,
+                screenType, screenSize, battery,
+                minPrice, maxPrice, search, pageable
+        );
+    }
+
 
     @Transactional(readOnly = true)
-    public List<Product> getAllProductsForAdmin() { return productRepository.findAll(); }
+    public List<Product> getBestSellers() {
+        // Placeholder: Implement logic to fetch best-selling products (e.g., by total sales or order count)
+        // Example: return productRepository.findTop10ByOrderBySalesCountDesc();
+        // You need to add a 'salesCount' field or join with an order table in ProductRepository
+        throw new UnsupportedOperationException("getBestSellers not implemented. Define sales metric in ProductRepository.");
+    }
+
+    /* ---------- Admin Queries ---------- */
+
+    @Transactional(readOnly = true)
+    public List<Product> getAllProductsForAdmin() {
+        return productRepository.findAll();
+    }
 
     @Transactional(readOnly = true)
     public List<Product> getLowStockProducts(int threshold) {
         return productRepository.findByStockQuantityLessThanEqual(threshold);
     }
 
-    /* ----------  Mutations  ---------- */
+    /* ---------- Mutations ---------- */
 
     public Product createProduct(ProductRequest req) {
         return productRepository.save(mapRequestToProduct(req));
@@ -109,20 +146,20 @@ public class ProductService {
         return productRepository.save(p);
     }
 
-    /* ----------  image helpers  ---------- */
+    /* ---------- Image Helpers ---------- */
 
     public Product addProductImages(Long id, List<MultipartFile> images) {
         Product p = getProductById(id);
         for (MultipartFile img : images) {
             String url = cloudinaryService.uploadFile(img, "products");
-            p.getAdditionalImages().add(url);         // <-- collection, so add() now compiles
+            p.getAdditionalImages().add(url);
         }
         return productRepository.save(p);
     }
 
     public Product removeProductImage(Long id, String url) {
         Product p = getProductById(id);
-        if (p.getAdditionalImages().remove(url)) {    // <-- collection remove()
+        if (p.getAdditionalImages().remove(url)) {
             cloudinaryService.deleteFile(url);
             productRepository.save(p);
         }
@@ -141,7 +178,7 @@ public class ProductService {
         return productRepository.save(p);
     }
 
-    /* ----------  internal mappers  ---------- */
+    /* ---------- Internal Mappers ---------- */
 
     private Product mapRequestToProduct(ProductRequest r) {
         Product p = Product.builder()
@@ -177,5 +214,7 @@ public class ProductService {
         if (r.getSpecifications() != null) r.getSpecifications().forEach(p::addSpecification);
     }
 
-    private <T> Set<T> defaultSet(Set<T> set) { return set == null ? new HashSet<>() : set; }
+    private <T> Set<T> defaultSet(Set<T> set) {
+        return set == null ? new HashSet<>() : set;
+    }
 }

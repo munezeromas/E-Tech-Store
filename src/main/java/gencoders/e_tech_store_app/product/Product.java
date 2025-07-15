@@ -95,4 +95,32 @@ public class Product {
     public boolean isInStock() {
         return stockQuantity > 0;
     }
+
+    @Column(length = 100)
+    private String brand;
+
+    @Column(length = 100)
+    private String model; // SKU code like (MQ233)
+
+    @Column(length = 50)
+    private String memory; // 128GB, 256GB etc
+
+    @Column(length = 50)
+    private String screenSize; // 6.1", 6.7"
+
+    @Column(length = 50)
+    private String screenType; // OLED, LCD, etc.
+
+    @Column(length = 50)
+    private String protection; // IP68, etc
+
+    @Column(length = 50)
+    private String batteryCapacity; // e.g., 4323mAh
+
+    @Column
+    private Double rating;
+    // 1.0 to 5.0
+    @Column(nullable = true)
+    private boolean featured = false;
+
 }

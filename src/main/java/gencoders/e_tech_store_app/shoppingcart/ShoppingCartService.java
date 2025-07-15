@@ -114,6 +114,26 @@ public class ShoppingCartService {
     public boolean isProductInCart(Long productId) {
         return cartItemRepository.existsByProductId(productId);
     }
+// -- overloads for String‑based controllers --
+
+    public ShoppingCart getUserCart(String userId) {
+        return getCartByUser(Long.parseLong(userId));
+    }
+
+    public ShoppingCart updateCartItem(String userId, Long itemId, int qty) {
+        return updateCartItemQuantity(Long.parseLong(userId), itemId, qty);
+    }
+
+    public ShoppingCart removeFromCart(String userId, Long itemId) {
+        return removeItemFromCart(Long.parseLong(userId), itemId);
+    }
+
+    // the earlier addToCart(String,String,int) already matches (String,Long,int) mismatch):
+    public ShoppingCart addToCart(String userId, Long productId, int qty) {
+        return addItemToCart(Long.parseLong(userId),
+                productId,
+                qty);
+    }
 
 
 }
